@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: worker-config
+  labels:
+    app: worker
+data:
+  DB_POSTGRES_HOST: postgres
+  DB_POSTGRES_PORT: "5432"
+  DB_USER: admin
+  DB_PASS: test123
+  DB_NAME: quartz
+  DB_SCHEMA: public
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+spec:
+  selector:
+    matchLabels:
+      app: worker-app
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: worker-app
+    spec:
+      containers:
+      - name: worker
+        image: avprokopov/worker
+        ports:
+        - containerPort: 8080
+        envFrom:
+          - configMapRef:
+              name: worker-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker
+spec:
+  selector:
+    app: worker-app
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: LoadBalancer
